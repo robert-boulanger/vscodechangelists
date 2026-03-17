@@ -4,3 +4,4 @@ dist/
 .vscode-test/
 coverage/
 .vscode/changelists.json
+.vscode/settings.json

@@ -1,9 +1,10 @@
 {
-  "name": "vscode-changelists",
-  "displayName": "Changelists",
+  "name": "hunklevel
+  changelists",
+  "displayName": "Hunk Level Changelists",
   "description": "JetBrains-style changelists for VSCode - organize your changes into logical groups and commit them independently",
-  "version": "0.1.0",
-  "publisher": "robert",
+  "version": "1.0.4",
+  "publisher": "RobertBoulanger",
   "license": "MIT",
   "icon": "images/icon.png",
   "repository": {
@@ -22,7 +23,8 @@
     "git",
     "source control",
     "jetbrains",
-    "changelist"
+    "changelist",
+    "hunk-level tracking"
   ],
   "activationEvents": [
     "workspaceContains:.git"
@@ -88,6 +90,24 @@
         "title": "Move to Changelist...",
         "category": "Changelist",
         "icon": "$(list-tree)"
+      },
+      {
+        "command": "changelists.addToGit",
+        "title": "Add to Git",
+        "category": "git/cl",
+        "icon": "$(add)"
+      },
+      {
+        "command": "changelists.addToGitignore",
+        "title": "Add to .gitignore",
+        "category": "git/cl",
+        "icon": "$(eye-closed)"
+      },
+      {
+        "command": "changelists.addToExclude",
+        "title": "Add to exclude",
+        "category": "git/cl",
+        "icon": "$(eye-closed)"
       }
     ],
     "views": {
@@ -100,7 +120,34 @@
         }
       ]
     },
+    "submenus": [
+      {
+        "id": "changelists.gitClSubmenu",
+        "label": "git/cl"
+      }
+    ],
     "menus": {
+      "changelists.gitClSubmenu": [
+        {
+          "command": "changelists.addToGit",
+          "group": "1_git"
+        },
+        {
+          "command": "changelists.addToGitignore",
+          "group": "2_ignore"
+        },
+        {
+          "command": "changelists.addToExclude",
+          "group": "2_ignore"
+        }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "changelists.gitClSubmenu",
+          "group": "7_modification",
+          "when": "!explorerResourceIsRoot"
+        }
+      ],
       "scm/change/title": [
         {
           "command": "changelists.moveChangeToList",
@@ -159,6 +206,21 @@
           "command": "changelists.moveFileTo",
           "when": "view == changelists.view && viewItem == changelistHunk",
           "group": "1_move"
+        },
+        {
+          "command": "changelists.addToGit",
+          "when": "view == changelists.view && viewItem == changelistFile",
+          "group": "3_git"
+        },
+        {
+          "command": "changelists.addToGitignore",
+          "when": "view == changelists.view && viewItem == changelistFile",
+          "group": "3_git"
+        },
+        {
+          "command": "changelists.addToExclude",
+          "when": "view == changelists.view && viewItem == changelistFile",
+          "group": "3_git"
         }
       ]
     },
@@ -184,7 +246,11 @@
         },
         "changelists.ticketProvider": {
           "type": "string",
-          "enum": ["none", "jira", "github"],
+          "enum": [
+            "none",
+            "jira",
+            "github"
+          ],
           "default": "none",
           "description": "Ticket provider for changelist name suggestions"
         },
@@ -232,7 +298,9 @@
     "watch": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --watch",
     "lint": "eslint src",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "vsce": "vsce package",
+    "build:vsce": "npm run build && vsce package"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -240,5 +308,8 @@
     "esbuild": "^0.24.0",
     "typescript": "^5.5.0",
     "vitest": "^2.1.0"
+  },
+  "dependencies": {
+    "@vscode/vsce": "^3.7.1"
   }
 }

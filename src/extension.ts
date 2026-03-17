@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { join, dirname, relative } from 'path';
 import { ChangelistManager } from './models/changelist-manager';
 import { GitService } from './services/git-service';
 import { FileTracker } from './services/file-tracker';
@@ -296,6 +298,50 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   );
 
+  // --- Git Tracking Commands (Add to Git / .gitignore / exclude) ---
+
+  const addToGit = vscode.commands.registerCommand(
+    'changelists.addToGit',
+    async (itemOrUri?: FileTreeItem | vscode.Uri) => {
+      const paths = resolveGitCommandPaths(itemOrUri, workspaceRoot);
+      if (paths.length === 0) return;
+      try {
+        await git.stageFiles(paths);
+        vscode.window.showInformationMessage(`Added to git: ${paths.join(', ')}`);
+      } catch (err) {
+        vscode.window.showErrorMessage(`git add failed: ${err}`);
+      }
+    }
+  );
+
+  const addToGitignore = vscode.commands.registerCommand(
+    'changelists.addToGitignore',
+    async (itemOrUri?: FileTreeItem | vscode.Uri) => {
+      const paths = resolveGitCommandPaths(itemOrUri, workspaceRoot);
+      if (paths.length === 0) return;
+      try {
+        await appendToFile(join(workspaceRoot, '.gitignore'), paths);
+        vscode.window.showInformationMessage(`Added to .gitignore: ${paths.join(', ')}`);
+      } catch (err) {
+        vscode.window.showErrorMessage(`Failed to update .gitignore: ${err}`);
+      }
+    }
+  );
+
+  const addToExclude = vscode.commands.registerCommand(
+    'changelists.addToExclude',
+    async (itemOrUri?: FileTreeItem | vscode.Uri) => {
+      const paths = resolveGitCommandPaths(itemOrUri, workspaceRoot);
+      if (paths.length === 0) return;
+      try {
+        await appendToFile(join(workspaceRoot, '.git', 'info', 'exclude'), paths);
+        vscode.window.showInformationMessage(`Added to .git/info/exclude: ${paths.join(', ')}`);
+      } catch (err) {
+        vscode.window.showErrorMessage(`Failed to update exclude: ${err}`);
+      }
+    }
+  );
+
   const commitChangelist = vscode.commands.registerCommand(
     'changelists.commitChangelist',
     async (item?: ChangelistTreeItem) => {
@@ -431,6 +477,9 @@ export function activate(context: vscode.ExtensionContext): void {
     openDiff,
     moveChangeToList,
     commitChangelist,
+    addToGit,
+    addToGitignore,
+    addToExclude,
     gutterDecorations!,
   );
 }
@@ -450,6 +499,43 @@ function updateStatusBar(statusBar: vscode.StatusBarItem, mgr: ChangelistManager
   const active = mgr.getActive();
   statusBar.text = `$(list-tree) ${active.name}`;
   statusBar.tooltip = `Active Changelist: ${active.name} (click to change)`;
+}
+
+/** Resolve paths from either a FileTreeItem (Changelist tree) or a Uri (File Explorer) */
+function resolveGitCommandPaths(itemOrUri: FileTreeItem | vscode.Uri | undefined, workspaceRoot: string): string[] {
+  if (!itemOrUri) return [];
+
+  if (itemOrUri instanceof vscode.Uri) {
+    return [relative(workspaceRoot, itemOrUri.fsPath)];
+  }
+
+  // FileTreeItem from Changelist tree
+  if ('file' in itemOrUri && itemOrUri.file) {
+    return [itemOrUri.file.relativePath];
+  }
+
+  return [];
+}
+
+/** Append paths to a file (e.g. .gitignore or .git/info/exclude), one per line */
+async function appendToFile(filePath: string, paths: string[]): Promise<void> {
+  const dir = dirname(filePath);
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+
+  let existing = '';
+  if (existsSync(filePath)) {
+    existing = readFileSync(filePath, 'utf-8');
+  }
+
+  const lines = existing.split('\n');
+  const toAdd = paths.filter(p => !lines.includes(p) && !lines.includes(`/${p}`));
+
+  if (toAdd.length === 0) return;
+
+  const suffix = existing.length > 0 && !existing.endsWith('\n') ? '\n' : '';
+  writeFileSync(filePath, existing + suffix + toAdd.join('\n') + '\n');
 }
 
 function createTicketProvider(): TicketProvider | undefined {

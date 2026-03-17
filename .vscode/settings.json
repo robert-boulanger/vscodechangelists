@@ -1,0 +1,6 @@
+{
+    "changelists.github.token": "",
+    "changelists.github.repo": "vscodechangelists",
+    "changelists.github.owner": "robert-boulanger",
+    "changelists.ticketProvider": "github"
+}
