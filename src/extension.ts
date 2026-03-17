@@ -10,10 +10,12 @@ import type { TicketProvider } from './tickets/types';
 import { JiraTicketProvider } from './tickets/jira-provider';
 import { GitHubTicketProvider } from './tickets/github-provider';
 import { showTicketPicker } from './tickets/ticket-picker';
+import { GutterDecorationManager } from './views/gutter-decorations';
 
 let manager: ChangelistManager | undefined;
 let fileTracker: FileTracker | undefined;
 let hunkManager: HunkManager | undefined;
+let gutterDecorations: GutterDecorationManager | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -55,6 +57,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Initial hunk refresh
   void hunkManager.refresh();
+
+  // --- Gutter Decorations ---
+  gutterDecorations = new GutterDecorationManager(hunkManager, manager);
 
   // --- Commands ---
 
@@ -243,6 +248,54 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   );
 
+  // --- Inline Diff Gutter Action ---
+
+  const moveChangeToList = vscode.commands.registerCommand(
+    'changelists.moveChangeToList',
+    async (uri: vscode.Uri, _changes: unknown[], index: number) => {
+      if (!manager || !hunkManager || !uri) return;
+
+      const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      if (!workspacePath) return;
+
+      // Get relative path
+      const relativePath = uri.fsPath.startsWith(workspacePath)
+        ? uri.fsPath.slice(workspacePath.length + 1)
+        : uri.fsPath;
+
+      // Refresh to get latest hunks
+      await hunkManager.refresh();
+
+      // Find the hunk that matches this change index
+      const fileHunks = hunkManager.getHunksForFile(relativePath);
+      if (fileHunks.length === 0) return;
+
+      // Match by index (changes array corresponds roughly to hunks)
+      const targetHunk = fileHunks[index] ?? fileHunks[0];
+      const currentCl = hunkManager.getAssignment(targetHunk.id);
+      const currentClName = currentCl ? manager.getById(currentCl)?.name : 'unassigned';
+
+      // Show QuickPick with all changelists
+      const choices = manager.getAll().map(cl => ({
+        label: `${cl.id === currentCl ? '$(check) ' : ''}${cl.name}`,
+        description: cl.isActive ? 'active' : '',
+        id: cl.id,
+      }));
+
+      const picked = await vscode.window.showQuickPick(choices, {
+        placeHolder: `Move hunk (L${targetHunk.newStart}: ${targetHunk.summary}) from "${currentClName}" to...`,
+      });
+
+      if (picked && picked.id !== currentCl) {
+        hunkManager.assign(targetHunk.id, picked.id);
+        manager.addFileShared(picked.id, relativePath);
+        vscode.window.showInformationMessage(
+          `Hunk moved to "${manager.getById(picked.id)?.name}"`
+        );
+      }
+    }
+  );
+
   const commitChangelist = vscode.commands.registerCommand(
     'changelists.commitChangelist',
     async (item?: ChangelistTreeItem) => {
@@ -376,11 +429,15 @@ export function activate(context: vscode.ExtensionContext): void {
     removeFile,
     openFile,
     openDiff,
+    moveChangeToList,
     commitChangelist,
+    gutterDecorations!,
   );
 }
 
 export function deactivate(): void {
+  gutterDecorations?.dispose();
+  gutterDecorations = undefined;
   fileTracker?.dispose();
   fileTracker = undefined;
   hunkManager?.dispose();

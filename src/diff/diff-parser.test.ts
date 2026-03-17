@@ -32,7 +32,7 @@ describe('DiffParser', () => {
       expect(hunk.newLines).toBe(4);
       expect(hunk.summary).toBe('added line');
     });
-
+    //changed
     it('should parse multiple hunks in one file', () => {
       const diff = [
         'diff --git a/file.txt b/file.txt',

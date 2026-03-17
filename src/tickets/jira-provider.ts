@@ -22,10 +22,10 @@ export class JiraTicketProvider implements TicketProvider {
   private getConfig() {
     const config = vscode.workspace.getConfiguration('changelists');
     return {
-      baseUrl: config.get<string>('jira.baseUrl', '').replace(/\/$/, ''),
-      projectKey: config.get<string>('jira.projectKey', ''),
-      token: config.get<string>('jira.token', ''),
-      email: config.get<string>('jira.email', ''),
+      baseUrl: config.get<string>('jira.baseUrl', '').trim().replace(/\/$/, ''),
+      projectKey: config.get<string>('jira.projectKey', '').trim(),
+      token: config.get<string>('jira.token', '').trim(),
+      email: config.get<string>('jira.email', '').trim(),
     };
   }
 

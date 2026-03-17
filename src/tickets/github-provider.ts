@@ -17,9 +17,9 @@ export class GitHubTicketProvider implements TicketProvider {
   private getConfig() {
     const config = vscode.workspace.getConfiguration('changelists');
     return {
-      token: config.get<string>('github.token', ''),
-      owner: config.get<string>('github.owner', ''),
-      repo: config.get<string>('github.repo', ''),
+      token: config.get<string>('github.token', '').trim(),
+      owner: config.get<string>('github.owner', '').trim(),
+      repo: config.get<string>('github.repo', '').trim(),
     };
   }
 
@@ -36,8 +36,8 @@ export class GitHubTicketProvider implements TicketProvider {
   }
 
   async search(query: string): Promise<Ticket[]> {
-    const { owner, repo } = this.getConfig();
-    if (!owner || !repo) return [];
+    const { owner, repo, token } = this.getConfig();
+    if (!owner || !repo || !token) return [];
 
     const cacheKey = `${owner}/${repo}:${query}`;
     const cached = this.cache.get(cacheKey);
@@ -49,11 +49,9 @@ export class GitHubTicketProvider implements TicketProvider {
       let url: string;
 
       if (query.trim()) {
-        // Search issues
         const q = encodeURIComponent(`repo:${owner}/${repo} is:issue is:open ${query}`);
         url = `https://api.github.com/search/issues?q=${q}&per_page=20&sort=updated`;
       } else {
-        // List recent open issues
         url = `https://api.github.com/repos/${owner}/${repo}/issues?state=open&per_page=20&sort=updated`;
       }
 
@@ -65,8 +63,7 @@ export class GitHubTicketProvider implements TicketProvider {
         ? (data as { items: GitHubIssue[] }).items
         : (data as GitHubIssue[]);
 
-      // Filter out pull requests (GitHub API includes them in issues)
-      const tickets: Ticket[] = issues
+      const tickets: Ticket[] = (issues ?? [])
         .filter(issue => !(issue as unknown as { pull_request?: unknown }).pull_request)
         .map(issue => ({
           key: `#${issue.number}`,

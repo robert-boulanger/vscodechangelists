@@ -5,6 +5,11 @@
   "version": "0.1.0",
   "publisher": "robert",
   "license": "MIT",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robert/vscode-changelists"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -77,6 +82,12 @@
         "title": "Open Diff",
         "category": "Changelist",
         "icon": "$(diff)"
+      },
+      {
+        "command": "changelists.moveChangeToList",
+        "title": "Move to Changelist...",
+        "category": "Changelist",
+        "icon": "$(list-tree)"
       }
     ],
     "views": {
@@ -90,6 +101,12 @@
       ]
     },
     "menus": {
+      "scm/change/title": [
+        {
+          "command": "changelists.moveChangeToList",
+          "group": "inline@1"
+        }
+      ],
       "view/title": [
         {
           "command": "changelists.newChangelist",
