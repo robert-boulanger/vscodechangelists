@@ -1,0 +1,227 @@
+{
+  "name": "vscode-changelists",
+  "displayName": "Changelists",
+  "description": "JetBrains-style changelists for VSCode - organize your changes into logical groups and commit them independently",
+  "version": "0.1.0",
+  "publisher": "robert",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "changelists",
+    "git",
+    "source control",
+    "jetbrains",
+    "changelist"
+  ],
+  "activationEvents": [
+    "workspaceContains:.git"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "changelists.newChangelist",
+        "title": "New Changelist",
+        "category": "Changelist",
+        "icon": "$(add)"
+      },
+      {
+        "command": "changelists.deleteChangelist",
+        "title": "Delete Changelist",
+        "category": "Changelist",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "changelists.renameChangelist",
+        "title": "Rename Changelist",
+        "category": "Changelist",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "changelists.setActiveChangelist",
+        "title": "Set Active Changelist",
+        "category": "Changelist",
+        "icon": "$(check)"
+      },
+      {
+        "command": "changelists.commitChangelist",
+        "title": "Commit Changelist",
+        "category": "Changelist",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "changelists.moveFileTo",
+        "title": "Move to Changelist...",
+        "category": "Changelist"
+      },
+      {
+        "command": "changelists.removeFile",
+        "title": "Remove from Changelist",
+        "category": "Changelist",
+        "icon": "$(close)"
+      },
+      {
+        "command": "changelists.openFile",
+        "title": "Open File",
+        "category": "Changelist",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "changelists.openDiff",
+        "title": "Open Diff",
+        "category": "Changelist",
+        "icon": "$(diff)"
+      }
+    ],
+    "views": {
+      "scm": [
+        {
+          "id": "changelists.view",
+          "name": "Changelists",
+          "icon": "$(list-tree)",
+          "contextualTitle": "Changelists"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "changelists.newChangelist",
+          "when": "view == changelists.view",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "changelists.setActiveChangelist",
+          "when": "view == changelists.view && viewItem =~ /^changelist/",
+          "group": "inline"
+        },
+        {
+          "command": "changelists.commitChangelist",
+          "when": "view == changelists.view && viewItem =~ /^changelist/",
+          "group": "1_commit"
+        },
+        {
+          "command": "changelists.renameChangelist",
+          "when": "view == changelists.view && viewItem == changelist",
+          "group": "2_manage"
+        },
+        {
+          "command": "changelists.deleteChangelist",
+          "when": "view == changelists.view && viewItem == changelist && !isDefaultChangelist",
+          "group": "2_manage"
+        },
+        {
+          "command": "changelists.openFile",
+          "when": "view == changelists.view && viewItem == changelistFile",
+          "group": "inline"
+        },
+        {
+          "command": "changelists.openDiff",
+          "when": "view == changelists.view && viewItem == changelistFile",
+          "group": "inline"
+        },
+        {
+          "command": "changelists.moveFileTo",
+          "when": "view == changelists.view && viewItem == changelistFile",
+          "group": "1_move"
+        },
+        {
+          "command": "changelists.removeFile",
+          "when": "view == changelists.view && viewItem == changelistFile",
+          "group": "2_remove"
+        },
+        {
+          "command": "changelists.moveFileTo",
+          "when": "view == changelists.view && viewItem == changelistHunk",
+          "group": "1_move"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Changelists",
+      "properties": {
+        "changelists.autoTrackChanges": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically assign changed files to the active changelist"
+        },
+        "changelists.pollInterval": {
+          "type": "number",
+          "default": 3000,
+          "description": "Interval in milliseconds for polling git changes",
+          "minimum": 1000,
+          "maximum": 30000
+        },
+        "changelists.removeEmptyChangelistAfterCommit": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically remove non-default changelists after committing if they become empty"
+        },
+        "changelists.ticketProvider": {
+          "type": "string",
+          "enum": ["none", "jira", "github"],
+          "default": "none",
+          "description": "Ticket provider for changelist name suggestions"
+        },
+        "changelists.jira.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Jira base URL (e.g. https://mycompany.atlassian.net)"
+        },
+        "changelists.jira.projectKey": {
+          "type": "string",
+          "default": "",
+          "description": "Jira project key (e.g. PROJ)"
+        },
+        "changelists.jira.token": {
+          "type": "string",
+          "default": "",
+          "description": "Jira API token (personal access token or email:token base64)"
+        },
+        "changelists.jira.email": {
+          "type": "string",
+          "default": "",
+          "description": "Jira account email (for basic auth)"
+        },
+        "changelists.github.token": {
+          "type": "string",
+          "default": "",
+          "description": "GitHub personal access token"
+        },
+        "changelists.github.owner": {
+          "type": "string",
+          "default": "",
+          "description": "GitHub repository owner"
+        },
+        "changelists.github.repo": {
+          "type": "string",
+          "default": "",
+          "description": "GitHub repository name"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap",
+    "watch": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --watch",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.1.0"
+  }
+}

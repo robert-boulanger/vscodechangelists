@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "followapp": {
+      "type": "http",
+      "url": "http://localhost:8417/mcp"
+    }
+  }
+}
