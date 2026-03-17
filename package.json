@@ -1,6 +1,5 @@
 {
-  "name": "hunklevel
-  changelists",
+  "name": "hunklevelchangelists",
   "displayName": "Hunk Level Changelists",
   "description": "JetBrains-style changelists for VSCode - organize your changes into logical groups and commit them independently",
   "version": "1.0.4",
