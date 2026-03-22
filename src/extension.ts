@@ -39,8 +39,9 @@ export function activate(context: vscode.ExtensionContext): void {
     canSelectMany: true,
   });
 
-  // Initialize (loads persisted state)
+  // Initialize (loads persisted state) and ensure changelists.json is gitignored
   void manager.initialize(workspaceFolder.uri);
+  void appendToFile(join(workspaceRoot, '.gitignore'), ['.vscode/changelists.json']);
 
   // --- Git Integration & File Tracking ---
 

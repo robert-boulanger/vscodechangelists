@@ -2,13 +2,13 @@
   "name": "hunklevelchangelists",
   "displayName": "Hunk Level Changelists",
   "description": "JetBrains-style changelists for VSCode - organize your changes into logical groups and commit them independently",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "publisher": "RobertBoulanger",
   "license": "MIT",
   "icon": "images/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robert/vscode-changelists"
+    "url": "https://github.com/robert-boulanger/vscodechangelists"
   },
   "engines": {
     "vscode": "^1.85.0"
